@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     QPaintBox1 = new QPaintBox(0, 0, ui->widget);
     QTimer1 = new QTimer(this);
     QSerialPort1 = new QSerialPort(this);
@@ -13,18 +14,20 @@ MainWindow::MainWindow(QWidget *parent)
     QSerialPort1 -> setPortName("COM3");
     QSerialPort1 -> setBaudRate(115200);
     QSerialPort1 -> setDataBits(QSerialPort :: Data8);
-    QSerialPort1 -> setParity(QSerialPort :: EvenParity); // Para st no parity
+    QSerialPort1 -> setParity(QSerialPort :: NoParity); // Para st no parity
     QSerialPort1 -> setFlowControl(QSerialPort :: NoFlowControl);
 
     connect(QSerialPort1, &QSerialPort::readyRead, this, &MainWindow::onQSerialPort1Rx);
     connect(QTimer1, &QTimer::timeout, this, &MainWindow::onQTimer1);
 
     header = 0; //Esperando la 'U'
-    QSerialPort1 -> open(QSerialPort::ReadWrite);
+
     QTimer1 -> start(50);
     ui->lcdNumber->setStyleSheet("color: green;");
     ui->lcdNumber_2->setStyleSheet("color: red;");
     ui->lcdNumber_3->setStyleSheet("color: red;");
+    ui->statusbar->showMessage("PUERTO: " + (QSerialPort1 -> portName()) + "//////BAUDRATE: " + QString::number(QSerialPort1 -> baudRate()) + "//////PARITY: NoParity");
+    command = ALIVE;
 }
 
 MainWindow::~MainWindow()
@@ -44,11 +47,63 @@ void MainWindow::onQTimer1(){
             header = 0;
         }
     }
+    //--------------------------------  LEDS  -----------------------------------------------//
+    QBrush brush;
+    QPainter paint(QPaintBox1 -> getCanvas());
+    int h = QPaintBox1 -> height();
+    int w = QPaintBox1 -> width();
+    int r = h/2;
+    int xDrawPos;
+
+    if(command == GETLEDSTATE){
+        xDrawPos = -150;
+        for(int i = 0; i < 4; i++){
+            if((payloadRx.mid(i, 1)) == '0'){
+                brush.setColor(Qt::white);
+                brush.setStyle(Qt::SolidPattern);
+                paint.setBrush(brush);
+                paint.drawEllipse(((w/2) - r + xDrawPos), r - (r / 1.7) - 30, (2 * r) - 90, (2 * r) - 90);
+                xDrawPos += 129;
+            }
+            if((payloadRx.mid(i, 1)) == '1'){
+                brush.setColor(Qt::red);
+                brush.setStyle(Qt::SolidPattern);
+                paint.setBrush(brush);
+                paint.drawEllipse(((w/2) - r + xDrawPos), r - (r / 1.7) - 30, (2 * r) - 90, (2 * r) - 90);
+                xDrawPos += 129;
+            }
+        }
+    }
+    //----------------------------------------------------------------------------------------//
+
+    //------------------------------------  BOTONES  ---------------------------------------//
+    if(command == GETBUTTONSTATE){
+        xDrawPos = -105;
+        for(int i = 0;  i < 4; i++){
+            if(payloadRx.mid(i,1) == '0'){
+                brush.setColor(Qt::gray);
+                brush.setStyle(Qt::SolidPattern);
+                paint.setBrush(brush);
+                paint.drawEllipse(((w/2) - r + xDrawPos), r - (r / 1.7) + 90, (2 * r) - 180, (2 * r) - 180);
+                xDrawPos += 129;
+            }
+            if(payloadRx.mid(i,1) == '1'){
+                brush.setColor(Qt::blue);
+                brush.setStyle(Qt::SolidPattern);
+                paint.setBrush(brush);
+                paint.drawEllipse(((w/2) - r + xDrawPos), r - (r / 1.7) + 90, (2 * r) - 180, (2 * r) - 180);
+                xDrawPos += 129;
+            }
+        }
+    }
+    xDrawPos = -150;
+    QPaintBox1 -> update();
 }
 
 void MainWindow::onQSerialPort1Rx(){
     int count;
     uint8_t *buf;
+    bool ok;
 
     count = QSerialPort1 -> bytesAvailable();
     if(count <= 0){
@@ -56,10 +111,10 @@ void MainWindow::onQSerialPort1Rx(){
     }
     buf = new uint8_t [count];
     QSerialPort1 -> read((char *)buf, count);
-
-   /* for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         strRx = strRx + QString("%1").arg(buf[i], 2, 16, QChar('0')).toUpper();
-    }*/
+    }
+
 
     for(int i=0; i < count; i++){
         switch (header) {
@@ -109,6 +164,15 @@ void MainWindow::onQSerialPort1Rx(){
             break;
             case 6: //ID + PAYLOAD + CKS
                 bufRx[index++] = buf[i];
+
+                IDRx = strRx.mid(12);
+                IDRx = IDRx.mid(0, 2);
+                command = IDRx.toUInt(&ok, 16);
+
+                //if(command == GETLEDSTATE || command == GETBUTTONSTATE){
+                    payloadRx = QString("%1").arg(strRx.mid(14, strRx.length() - 18).toULongLong(&ok, 16), 4, 2, QChar('0'));
+               // }                    
+
                 if(nbytes != 1){
                     cks ^= buf[i];
                 }
@@ -116,7 +180,9 @@ void MainWindow::onQSerialPort1Rx(){
                 if(!nbytes){
                     header = 6;
                     if(buf[i] == cks){
-                        QMessageBox::information(this, "RX", "I'M ALIVE");
+                        ui->lineEdit->clear();
+                        ui->lineEdit->setText(strRx);
+                        strRx = "";
                     }
                 }
             break;
@@ -127,33 +193,35 @@ void MainWindow::onQSerialPort1Rx(){
     delete[] buf;
 }
 
-void MainWindow::on_pushButton_clicked()
-{
-    uint8_t tx[12];
-    if(QSerialPort1 -> isOpen()){
-        tx[0] = 'U';
-        tx[1] = 'N';
-        tx[2] = 'E';
-        tx[3] = 'R';
-        tx[4] = 2;
-        tx[5] = ':';
-        tx[6] = 0xF0;
-        for(int i = 0; i < 7; i++){
-            tx[7] ^= tx[i];
-        }
-        QSerialPort1 -> write((char *)tx, 8);
-        //strRx = "0x";
-    }else{
-        QMessageBox::information(this, "PORT", "El puerto está cerrado");
-    }
-}
-
-void MainWindow::on_radioButton_toggled(bool checked)
-{
+void MainWindow::on_radioButton_toggled(bool checked){
     if(checked){
-        ui -> comboBox_2 -> setDisabled(true);
+        if(QSerialPort1 -> open(QSerialPort::ReadWrite)){
+            uint8_t tx[12];
+            if(QSerialPort1 -> isOpen()){
+                tx[0] = 'U';
+                tx[1] = 'N';
+                tx[2] = 'E';
+                tx[3] = 'R';
+                tx[4] = 2;
+                tx[5] = ':';
+                tx[6] = command;
+
+                for(int i = 0; i < 7; i++){
+                    tx[7] ^= tx[i];
+                }
+                QSerialPort1 -> write((char *)tx, 8);
+                strRx = "";
+            }else{
+                QMessageBox::information(this, "PORT", "El dispositivo no esta conectado");
+            }
+        }else{
+            ui -> radioButton_2 -> setChecked(true);
+            QMessageBox::information(this, "PORT", "No se pudo abrir el puerto");
+        }
     }else{
-        ui -> comboBox_2 -> setDisabled(false);
+        if(QSerialPort1 -> isOpen()){
+            QSerialPort1 -> close();
+            ui -> lineEdit -> clear();
+        }
     }
 }
-

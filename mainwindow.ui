@@ -362,7 +362,7 @@
       <x>610</x>
       <y>100</y>
       <width>181</width>
-      <height>241</height>
+      <height>91</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -371,73 +371,11 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QFrame" name="frame_4">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>150</y>
-       <width>141</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::WinPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <widget class="QComboBox" name="comboBox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>121</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>Lista de Comandos</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QPushButton" name="pushButton">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>40</y>
-        <width>80</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Enviar</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QComboBox" name="comboBox_2">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>40</y>
-       <width>141</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <item>
-      <property name="text">
-       <string>Elegir Puerto...</string>
-      </property>
-     </item>
-    </widget>
     <widget class="QRadioButton" name="radioButton">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>80</y>
+       <x>50</x>
+       <y>40</y>
        <width>84</width>
        <height>19</height>
       </rect>
@@ -449,8 +387,8 @@
     <widget class="QRadioButton" name="radioButton_2">
      <property name="geometry">
       <rect>
-       <x>30</x>
-       <y>110</y>
+       <x>50</x>
+       <y>60</y>
        <width>91</width>
        <height>19</height>
       </rect>
@@ -465,9 +403,9 @@
     <widget class="QLabel" name="label_12">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>40</x>
        <y>10</y>
-       <width>161</width>
+       <width>101</width>
        <height>20</height>
       </rect>
      </property>
@@ -478,9 +416,19 @@
       </font>
      </property>
      <property name="text">
-      <string>Configuracion</string>
+      <string>Conexion</string>
      </property>
     </widget>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>620</x>
+      <y>240</y>
+      <width>161</width>
+      <height>21</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -503,7 +451,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
