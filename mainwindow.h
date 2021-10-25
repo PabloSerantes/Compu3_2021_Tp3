@@ -22,16 +22,24 @@ public:
 
 private slots:
     void onQSerialPort1Rx();
+    void onQSerialPort1Tx();
     void onQTimer1();
     void on_radioButton_toggled(bool checked);
 
 private:
+    typedef enum{
+        IDLE,
+        GAMEON,
+        LOST,
+    }_eGameState;
     Ui::MainWindow *ui;
     QSerialPort *QSerialPort1;
-    QString strRx, IDRx, payloadRx;
-    uint8_t bufRx[48], index, nbytes, cks, header, timeoutRx, command;
+    QString strRx, IDRx, payloadRx, strTx;
+    uint8_t bufRx[48], index, nbytes, cks, header, timeoutRx, command, gameState = IDLE, payloadTx[48];
+    uint32_t puntaje;
     QTimer *QTimer1;
     QPaintBox *QPaintBox1;
+
     typedef enum{
            ACK=0x0D,
            ALIVE=0xF0,
@@ -40,12 +48,5 @@ private:
            BUTTONEVENT=0xFA,
            GETBUTTONSTATE=0xFD
     }_eID;
-
-    typedef enum{
-        LED1 = 0x01,
-        LED2 = 0x02,
-        LED3 = 0x04,
-        LED4 = 0x08
-    } _eLEDS;
 };
 #endif // MAINWINDOW_H

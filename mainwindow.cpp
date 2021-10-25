@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     QSerialPort1 -> setFlowControl(QSerialPort :: NoFlowControl);
 
     connect(QSerialPort1, &QSerialPort::readyRead, this, &MainWindow::onQSerialPort1Rx);
+
     connect(QTimer1, &QTimer::timeout, this, &MainWindow::onQTimer1);
 
     header = 0; //Esperando la 'U'
@@ -27,7 +28,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lcdNumber_2->setStyleSheet("color: red;");
     ui->lcdNumber_3->setStyleSheet("color: red;");
     ui->statusbar->showMessage("PUERTO: " + (QSerialPort1 -> portName()) + "//////BAUDRATE: " + QString::number(QSerialPort1 -> baudRate()) + "//////PARITY: NoParity");
-    command = ALIVE;
+    //command = ALIVE;
+    command =SETLEDSTATE;
+    payloadTx[0] = 0x01;
+    strTx = "";
 }
 
 MainWindow::~MainWindow()
@@ -41,6 +45,21 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::onQTimer1(){
+    /*if(QSerialPort1 -> isOpen()){
+        switch(gameState){
+            case IDLE:
+                command = SETLEDSTATE;
+                payloadTx = 0x0F;
+                onQSerialPort1Tx();
+            break;
+
+            case GAMEON:
+            break;
+
+            case LOST:
+            break;
+        }
+    }*/
     if(header){
         timeoutRx--;
         if(!timeoutRx){
@@ -96,8 +115,49 @@ void MainWindow::onQTimer1(){
             }
         }
     }
-    xDrawPos = -150;
     QPaintBox1 -> update();
+}
+
+void MainWindow::onQSerialPort1Tx(){
+    if(QSerialPort1 -> open(QSerialPort::ReadWrite)){
+        uint8_t tx[12];
+        if(QSerialPort1 -> isOpen()){
+            tx[0] = 'U';
+            tx[1] = 'N';
+            tx[2] = 'E';
+            tx[3] = 'R';
+            tx[4] = 3;
+            tx[5] = ':';
+            tx[6] = command;
+            if(command == ALIVE || command == GETLEDSTATE){
+                for(int i = 0; i < 7; i++){
+                    tx[7] ^= tx[i];
+                }
+
+                //potato.jpg
+                QMessageBox::information(this, "PORT", "Conexion exitosa!", "OK");
+                QSerialPort1 -> write((char *)tx, 8);
+            }
+            if(command == SETLEDSTATE){
+                tx[7] = payloadTx[0];
+                for(int i = 0; i < 8; i++){
+                    tx[8] ^= tx[i];
+                }
+                QMessageBox::information(this, "PORT", "Conexion exitosa!", "OK");
+                for(int i = 0; i < 9; i++){
+                    strTx = strTx + QString("%1").arg(tx[i], 2, 16, QChar('0')).toUpper();
+                }
+                QSerialPort1 -> write((char *)tx, 9);
+                ui->lineEdit->setText(strTx);
+            }
+            strRx = "";
+        }else{
+            QMessageBox::information(this, "PORT", "El dispositivo no esta conectado");
+        }
+    }else{
+        ui -> radioButton_2 -> setChecked(true);
+        QMessageBox::information(this, "PORT", "No se pudo abrir el puerto");
+    }
 }
 
 void MainWindow::onQSerialPort1Rx(){
@@ -194,30 +254,9 @@ void MainWindow::onQSerialPort1Rx(){
 }
 
 void MainWindow::on_radioButton_toggled(bool checked){
-    if(checked){
-        if(QSerialPort1 -> open(QSerialPort::ReadWrite)){
-            uint8_t tx[12];
-            if(QSerialPort1 -> isOpen()){
-                tx[0] = 'U';
-                tx[1] = 'N';
-                tx[2] = 'E';
-                tx[3] = 'R';
-                tx[4] = 2;
-                tx[5] = ':';
-                tx[6] = command;
 
-                for(int i = 0; i < 7; i++){
-                    tx[7] ^= tx[i];
-                }
-                QSerialPort1 -> write((char *)tx, 8);
-                strRx = "";
-            }else{
-                QMessageBox::information(this, "PORT", "El dispositivo no esta conectado");
-            }
-        }else{
-            ui -> radioButton_2 -> setChecked(true);
-            QMessageBox::information(this, "PORT", "No se pudo abrir el puerto");
-        }
+    if(checked){        
+        onQSerialPort1Tx();
     }else{
         if(QSerialPort1 -> isOpen()){
             QSerialPort1 -> close();
