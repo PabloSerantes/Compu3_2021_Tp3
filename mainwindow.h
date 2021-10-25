@@ -48,5 +48,12 @@ private:
            BUTTONEVENT=0xFA,
            GETBUTTONSTATE=0xFD
     }_eID;
+
+    typedef enum{
+        LED1,
+        LED2,
+        LED3,
+        LED4,
+    }_eLEDS;
 };
 #endif // MAINWINDOW_H

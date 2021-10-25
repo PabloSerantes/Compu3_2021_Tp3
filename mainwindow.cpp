@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->showMessage("PUERTO: " + (QSerialPort1 -> portName()) + "//////BAUDRATE: " + QString::number(QSerialPort1 -> baudRate()) + "//////PARITY: NoParity");
     //command = ALIVE;
     command =SETLEDSTATE;
-    payloadTx[0] = 0x01;
+    payloadTx[0] = LED1;
     strTx = "";
 }
 
@@ -74,7 +74,7 @@ void MainWindow::onQTimer1(){
     int r = h/2;
     int xDrawPos;
 
-    if(command == GETLEDSTATE){
+    if(command == GETLEDSTATE || command == SETLEDSTATE){
         xDrawPos = -150;
         for(int i = 0; i < 4; i++){
             if((payloadRx.mid(i, 1)) == '0'){
@@ -139,18 +139,14 @@ void MainWindow::onQSerialPort1Tx(){
                 QSerialPort1 -> write((char *)tx, 8);
             }
             if(command == SETLEDSTATE){
+                tx[8] = 0;
                 tx[7] = payloadTx[0];
                 for(int i = 0; i < 8; i++){
                     tx[8] ^= tx[i];
                 }
-                QMessageBox::information(this, "PORT", "Conexion exitosa!", "OK");
-                for(int i = 0; i < 9; i++){
-                    strTx = strTx + QString("%1").arg(tx[i], 2, 16, QChar('0')).toUpper();
-                }
+               // QMessageBox::information(this, "PORT", "Conexion exitosa!", "OK");
                 QSerialPort1 -> write((char *)tx, 9);
-                ui->lineEdit->setText(strTx);
             }
-            strRx = "";
         }else{
             QMessageBox::information(this, "PORT", "El dispositivo no esta conectado");
         }
