@@ -28,6 +28,7 @@ private slots:
 
 private:
     typedef enum{
+        STARTING,
         IDLE,
         GAMEON,
         LOST,
