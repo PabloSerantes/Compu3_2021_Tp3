@@ -43,7 +43,12 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::onQTimer1(){
-
+    if(header){
+        timeoutRx--;
+        if(!timeoutRx){
+            header = 0;
+        }
+    }
     if(QSerialPort1 -> isOpen()){
         switch(gameState){
             case STARTING:
@@ -72,7 +77,7 @@ void MainWindow::onQTimer1(){
                 gameState = IDLE;
             break;
             case IDLE:
-                if(commandRx == GETBUTTONSTATE){
+               /* if(commandRx == GETBUTTONSTATE){
                     for(int i = 0; i < 4; i++){
                         if(buttons[i] == '0'){
                             buttonDrawer(false, i);
@@ -80,7 +85,7 @@ void MainWindow::onQTimer1(){
                             buttonDrawer(true, i);
                         }
                     }
-                }
+                }*/
             break;
 
             case GAMEON:
@@ -88,13 +93,6 @@ void MainWindow::onQTimer1(){
 
             case LOST:
             break;
-        }
-    }
-
-    if(header){
-        timeoutRx--;
-        if(!timeoutRx){
-            header = 0;
         }
     }
 }
@@ -307,11 +305,11 @@ void MainWindow::onQSerialPort1Rx(){
                 nbytes--;
                 if(!nbytes){
                     header = 6;
-                    if(buf[i] == cks){
-                        recieved = true;
+                    if(buf[i] == cks){                        
                         ui->lineEdit->clear();
                         ui->lineEdit->setText(strRx);
                         strRx = "";
+                        recieved = true;
                     }else{
                         recieved = false;
                     }
